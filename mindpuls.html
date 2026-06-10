@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MindPulse</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F0EEF8; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  .phone { width: 390px; min-height: 780px; background: #F7F6FC; border-radius: 44px; overflow: hidden; border: 1.5px solid #D5D2EE; box-shadow: 0 20px 60px rgba(100,90,180,0.12); position: relative; display: flex; flex-direction: column; }
+  .screen { display: none; flex-direction: column; flex: 1; }
+  .screen.active { display: flex; }
+  .status-bar { padding: 14px 20px 6px; display: flex; justify-content: space-between; align-items: center; background: #F7F6FC; }
+  .status-bar .app-name { font-size: 15px; font-weight: 600; color: #534AB7; }
+  .status-bar .time { font-size: 13px; color: #888; }
+  .content { flex: 1; padding: 16px 20px 10px; overflow-y: auto; }
+  .nav { display: flex; justify-content: space-around; background: white; border-top: 1px solid #ECEAF8; padding: 10px 0 18px; }
+  .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; cursor: pointer; color: #AAA; font-size: 10px; padding: 4px 10px; border-radius: 10px; transition: color 0.2s; }
+  .nav-btn i { font-size: 21px; }
+  .nav-btn.active { color: #7F77DD; }
+  .page-title { font-size: 22px; font-weight: 600; color: #2A2060; margin-bottom: 18px; }
+  .greeting { font-size: 13px; color: #888; margin-bottom: 3px; }
+  .card { background: white; border-radius: 16px; border: 1px solid #ECEAF8; padding: 18px; margin-bottom: 14px; }
+  .alert-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .low { background: #E6F7F0; color: #1A7A55; }
+  .med { background: #FEF3E0; color: #9A6010; }
+  .high { background: #FEEBEB; color: #B03030; }
+  .big-num { font-size: 54px; font-weight: 700; line-height: 1; margin: 10px 0 4px; }
+  .c-low { color: #1D9E75; } .c-med { color: #D4870A; } .c-high { color: #E04040; }
+  .bar-track { background: #ECEAF8; border-radius: 6px; height: 6px; }
+  .bar-fill { height: 6px; border-radius: 6px; transition: width 0.5s; }
+  .row-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: #AAA; }
+  .mood-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .mood-btn { background: white; border: 1px solid #ECEAF8; border-radius: 12px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
+  .mood-btn:hover, .mood-btn.sel { border-color: #7F77DD; background: #F0EFFE; }
+  .mood-btn i { font-size: 24px; color: #7F77DD; }
+  .mood-btn span { font-size: 12px; color: #555; }
+  .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer; font-size: 15px; font-weight: 600; transition: opacity 0.2s; }
+  .btn-p { background: #7F77DD; color: white; }
+  .btn-p:hover { opacity: 0.9; }
+  .btn-o { background: transparent; border: 1px solid #CCC; color: #444; margin-top: 8px; }
+  .btn-o:hover { background: #F5F4FF; }
+  .insight { background: #EEEDFE; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; }
+  .insight i { font-size: 16px; color: #534AB7; flex-shrink: 0; margin-top: 2px; }
+  .insight p { font-size: 13px; color: #3C3489; line-height: 1.55; }
+  .prog-wrap { background: #ECEAF8; border-radius: 6px; height: 4px; margin-bottom: 18px; }
+  .prog { height: 4px; border-radius: 6px; background: #7F77DD; transition: width 0.3s; }
+  .q-card { background: white; border-radius: 14px; border: 1px solid #ECEAF8; padding: 18px; margin-bottom: 16px; }
+  .q-idx { font-size: 11px; color: #AAA; margin-bottom: 5px; }
+  .q-text { font-size: 15px; color: #222; line-height: 1.5; margin-bottom: 16px; }
+  .scale-row { display: flex; gap: 6px; }
+  .s-btn { flex: 1; height: 42px; border: 1px solid #DDD; border-radius: 10px; background: #F9F8FF; cursor: pointer; font-size: 15px; font-weight: 600; color: #888; transition: all 0.18s; }
+  .s-btn:hover { border-color: #AFA9EC; color: #7F77DD; }
+  .s-btn.on { background: #EEEDFE; border-color: #7F77DD; color: #534AB7; }
+  .ex-card { background: white; border-radius: 14px; border: 1px solid #ECEAF8; padding: 14px; margin-bottom: 11px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; transition: border-color 0.18s; }
+  .ex-card:hover { border-color: #AFA9EC; }
+  .ex-ico { width: 46px; height: 46px; border-radius: 12px; background: #EEEDFE; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ex-ico i { font-size: 22px; color: #534AB7; }
+  .ex-card h3 { font-size: 14px; font-weight: 600; color: #222; margin-bottom: 3px; }
+  .ex-card p { font-size: 12px; color: #777; line-height: 1.45; }
+  .tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #EEEDFE; color: #534AB7; display: inline-block; margin-top: 4px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat { background: #F0EFFE; border-radius: 12px; padding: 12px; }
+  .stat .sl { font-size: 11px; color: #888; margin-bottom: 3px; }
+  .stat .sv { font-size: 22px; font-weight: 700; color: #3C3489; }
+  .stat .ss { font-size: 11px; color: #AAA; margin-top: 2px; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 7px; height: 80px; margin: 12px 0 5px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .b { width: 100%; border-radius: 4px 4px 0 0; }
+  .day-labels { display: flex; justify-content: space-between; font-size: 10px; color: #AAA; }
+  .pat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .pat-row span { font-size: 13px; color: #555; }
+  .mini-bar { width: 90px; height: 7px; background: #EEE; border-radius: 4px; overflow: hidden; }
+  .mini-fill { height: 7px; border-radius: 4px; }
+  .safety { background: #E4F6EE; border-radius: 12px; padding: 12px 14px; margin-top: 14px; display: flex; gap: 8px; align-items: flex-start; }
+  .safety i { font-size: 15px; color: #1A7A55; flex-shrink: 0; margin-top: 2px; }
+  .safety p { font-size: 12px; color: #185A3E; line-height: 1.55; }
+  .set-card { background: white; border-radius: 14px; border: 1px solid #ECEAF8; padding: 16px; margin-bottom: 12px; }
+  .set-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #F2F0FB; }
+  .set-row:last-child { border-bottom: none; }
+  .set-row .l { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #333; }
+  .set-row i { font-size: 18px; color: #7F77DD; }
+  .tgl { width: 44px; height: 25px; border-radius: 13px; border: none; cursor: pointer; position: relative; transition: background 0.2s; }
+  .tgl.on { background: #7F77DD; } .tgl.off { background: #CCC; }
+  .tgl::after { content:''; width: 19px; height: 19px; border-radius: 50%; background: white; position: absolute; top: 3px; transition: left 0.18s; }
+  .tgl.on::after { left: 22px; } .tgl.off::after { left: 3px; }
+  .loader { display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 14px; }
+  .spin { width: 44px; height: 44px; border: 3px solid #EEEDFE; border-top-color: #7F77DD; border-radius: 50%; animation: sp 0.8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .loader p { font-size: 13px; color: #888; }
+  .ai-box { background: white; border-radius: 14px; border: 1px solid #ECEAF8; padding: 16px; margin-bottom: 13px; }
+  .ai-lbl { font-size: 11px; color: #AAA; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+  .ai-lbl i { font-size: 13px; color: #7F77DD; }
+  .ai-box p { font-size: 14px; color: #333; line-height: 1.65; }
+  .breath-circle { width: 130px; height: 130px; border-radius: 50%; background: #EEEDFE; border: 3px solid #AFA9EC; margin: 24px auto; display: flex; align-items: center; justify-content: center; flex-direction: column; animation: br 4s ease-in-out infinite; }
+  @keyframes br { 0%,100%{transform:scale(1)} 50%{transform:scale(1.22)} }
+  .breath-circle .bp { font-size: 14px; color: #534AB7; font-weight: 600; }
+  .breath-circle .bn { font-size: 34px; font-weight: 700; color: #3C3489; }
+  .step-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; background: #EEEDFE; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #534AB7; flex-shrink: 0; }
+  textarea { width: 100%; padding: 10px 12px; border: 1px solid #DDD; border-radius: 10px; background: #FAFAFE; color: #333; font-size: 14px; resize: none; height: 72px; font-family: inherit; }
+  textarea:focus { outline: none; border-color: #7F77DD; }
+  label.qlbl { font-size: 13px; color: #666; display: block; margin-bottom: 6px; }
+  .back-btn { background: none; border: none; cursor: pointer; color: #888; font-size: 15px; display: flex; align-items: center; gap: 3px; }
+</style>
+</head>
+<body>
+
+<div class="phone" id="app">
+
+  <!-- HOME -->
+  <div class="screen active" id="sc-home">
+    <div class="status-bar"><span class="app-name">MindPulse</span><span class="time" id="clock">09:41</span></div>
+    <div class="content">
+      <p class="greeting">Bom dia 👋</p>
+      <h1 class="page-title">Como te sentes agora?</h1>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+          <div>
+            <div style="font-size:11px;color:#AAA;margin-bottom:3px;">Estado atual</div>
+            <div class="big-num c-low" id="h-score">42</div>
+            <div style="font-size:12px;color:#888;">Tensão emocional</div>
+          </div>
+          <span class="alert-badge low" id="h-badge"><i class="ti ti-activity-heartbeat"></i> Baixo</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="h-bar" style="width:42%;background:#1D9E75;"></div></div>
+        <div class="row-labels"><span>Calmo</span><span>Tenso</span></div>
+      </div>
+      <div class="mood-grid">
+        <button class="mood-btn" onclick="selMood(this,'Calmo')"><i class="ti ti-mood-smile"></i><span>Calmo</span></button>
+        <button class="mood-btn" onclick="selMood(this,'Ansioso')"><i class="ti ti-mood-nervous"></i><span>Ansioso</span></button>
+        <button class="mood-btn" onclick="selMood(this,'Irritado')"><i class="ti ti-mood-angry"></i><span>Irritado</span></button>
+        <button class="mood-btn" onclick="selMood(this,'Cansado')"><i class="ti ti-moon"></i><span>Cansado</span></button>
+      </div>
+      <button class="btn btn-p" onclick="go('sc-quiz')"><i class="ti ti-clipboard-text"></i> Fazer questionário rápido</button>
+      <div class="insight" style="margin-top:14px;">
+        <i class="ti ti-bulb"></i>
+        <p>Nos últimos 3 dias detectei sinais de tensão ao final da tarde. Considera uma pausa de 2 minutos por volta das 17h.</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="go('sc-home')"><i class="ti ti-home"></i><span>Início</span></button>
+      <button class="nav-btn" onclick="go('sc-quiz')"><i class="ti ti-clipboard-text"></i><span>Check-in</span></button>
+      <button class="nav-btn" onclick="go('sc-ex')"><i class="ti ti-heart"></i><span>Exercícios</span></button>
+      <button class="nav-btn" onclick="go('sc-hist')"><i class="ti ti-chart-line"></i><span>Histórico</span></button>
+      <button class="nav-btn" onclick="go('sc-set')"><i class="ti ti-settings"></i><span>Definições</span></button>
+    </nav>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="screen" id="sc-quiz">
+    <div class="status-bar">
+      <button class="back-btn" onclick="go('sc-home')"><i class="ti ti-arrow-left"></i></button>
+      <span style="font-size:14px;color:#555;">Questionário</span>
+      <span style="font-size:13px;color:#AAA;" id="qcount">1/6</span>
+    </div>
+    <div class="content">
+      <div class="prog-wrap"><div class="prog" id="prog" style="width:16%"></div></div>
+      <div id="quiz-area"></div>
+      <button class="btn btn-p" id="next-btn" onclick="nextQ()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen" id="sc-result">
+    <div class="status-bar">
+      <button class="back-btn" onclick="go('sc-home')"><i class="ti ti-x"></i></button>
+      <span style="font-size:14px;color:#555;">Análise IA</span>
+      <span></span>
+    </div>
+    <div class="content">
+      <div class="loader" id="ldr"><div class="spin"></div><p>A analisar as tuas respostas...</p></div>
+      <div id="res-done" style="display:none;">
+        <div class="card" style="text-align:center;padding:22px 18px;">
+          <div id="res-badge" style="margin-bottom:8px;"></div>
+          <div class="big-num" id="res-num" style="text-align:center;"></div>
+          <div style="font-size:12px;color:#888;">nível de tensão detetado</div>
+        </div>
+        <div class="ai-box">
+          <div class="ai-lbl"><i class="ti ti-sparkles"></i> Análise personalizada</div>
+          <p id="ai-text">A carregar...</p>
+        </div>
+        <h2 style="font-size:16px;font-weight:600;color:#2A2060;margin-bottom:12px;">Recomendações</h2>
+        <div id="recs"></div>
+        <div class="safety">
+          <i class="ti ti-shield-check"></i>
+          <p>Esta aplicação não substitui acompanhamento médico ou psicológico profissional. Em caso de sofrimento intenso, procura ajuda especializada.</p>
+        </div>
+        <button class="btn btn-p" style="margin-top:16px;" onclick="go('sc-ex')">Ver exercícios</button>
+        <button class="btn btn-o" onclick="go('sc-home')">Voltar ao início</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXERCISES -->
+  <div class="screen" id="sc-ex">
+    <div class="status-bar"><span class="app-name">Exercícios</span><span></span></div>
+    <div class="content">
+      <h1 class="page-title">Regulação emocional</h1>
+      <div class="ex-card" onclick="openEx('breath')"><div class="ex-ico"><i class="ti ti-wind"></i></div><div><h3>Respiração 4-7-8</h3><p>Técnica guiada para reduzir ansiedade rapidamente.</p><span class="tag">3 min</span></div></div>
+      <div class="ex-card" onclick="openEx('pause')"><div class="ex-ico"><i class="ti ti-player-pause"></i></div><div><h3>Pausa de 2 minutos</h3><p>Para e observa. Sem telemóvel, sem estímulos.</p><span class="tag">2 min</span></div></div>
+      <div class="ex-card" onclick="openEx('write')"><div class="ex-ico"><i class="ti ti-pencil"></i></div><div><h3>Escrita emocional</h3><p>Escreve sobre o que sentes. Sem julgamento.</p><span class="tag">5 min</span></div></div>
+      <div class="ex-card" onclick="openEx('walk')"><div class="ex-ico"><i class="ti ti-walk"></i></div><div><h3>Caminhada consciente</h3><p>10 minutos para resetar o sistema nervoso.</p><span class="tag">10 min</span></div></div>
+      <div class="ex-card" onclick="openEx('ground')"><div class="ex-ico"><i class="ti ti-hand-stop"></i></div><div><h3>Grounding 5-4-3-2-1</h3><p>Ancoragem sensorial para momentos de impulso.</p><span class="tag">4 min</span></div></div>
+      <div class="safety"><i class="ti ti-shield-check"></i><p>Esta aplicação não substitui acompanhamento médico ou psicológico profissional.</p></div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn" onclick="go('sc-home')"><i class="ti ti-home"></i><span>Início</span></button>
+      <button class="nav-btn" onclick="go('sc-quiz')"><i class="ti ti-clipboard-text"></i><span>Check-in</span></button>
+      <button class="nav-btn active" onclick="go('sc-ex')"><i class="ti ti-heart"></i><span>Exercícios</span></button>
+      <button class="nav-btn" onclick="go('sc-hist')"><i class="ti ti-chart-line"></i><span>Histórico</span></button>
+      <button class="nav-btn" onclick="go('sc-set')"><i class="ti ti-settings"></i><span>Definições</span></button>
+    </nav>
+  </div>
+
+  <!-- EXERCISE DETAIL -->
+  <div class="screen" id="sc-exd">
+    <div class="status-bar">
+      <button class="back-btn" onclick="go('sc-ex')"><i class="ti ti-arrow-left"></i></button>
+      <span style="font-size:14px;color:#555;" id="exd-title">Exercício</span>
+      <span></span>
+    </div>
+    <div class="content" id="exd-body"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="screen" id="sc-hist">
+    <div class="status-bar"><span class="app-name">Histórico</span><span></span></div>
+    <div class="content">
+      <h1 class="page-title">A tua evolução</h1>
+      <div class="stat-grid">
+        <div class="stat"><div class="sl">Esta semana</div><div class="sv" style="color:#1D9E75;">↓ 18%</div><div class="ss">tensão média</div></div>
+        <div class="stat"><div class="sl">Check-ins</div><div class="sv">12</div><div class="ss">últimos 7 dias</div></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:14px;font-weight:600;color:#2A2060;">Tensão semanal</span><span style="font-size:11px;color:#AAA;">últimos 7 dias</span></div>
+        <div class="chart-bars" id="hchart"></div>
+        <div class="day-labels"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;color:#2A2060;margin-bottom:14px;">Padrões por período</div>
+        <div class="pat-row"><span>Manhã (7h–12h)</span><div style="display:flex;align-items:center;gap:8px;"><div class="mini-bar"><div class="mini-fill" style="width:30%;background:#1D9E75;"></div></div><span style="font-size:11px;color:#AAA;">Baixo</span></div></div>
+        <div class="pat-row"><span>Tarde (12h–17h)</span><div style="display:flex;align-items:center;gap:8px;"><div class="mini-bar"><div class="mini-fill" style="width:60%;background:#D4870A;"></div></div><span style="font-size:11px;color:#AAA;">Médio</span></div></div>
+        <div class="pat-row"><span>Noite (17h–22h)</span><div style="display:flex;align-items:center;gap:8px;"><div class="mini-bar"><div class="mini-fill" style="width:78%;background:#E04040;"></div></div><span style="font-size:11px;color:#AAA;">Alto</span></div></div>
+      </div>
+      <div class="insight"><i class="ti ti-brain"></i><p>A tua tensão tende a aumentar ao fim do dia. Experimenta o exercício de respiração às 17h.</p></div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn" onclick="go('sc-home')"><i class="ti ti-home"></i><span>Início</span></button>
+      <button class="nav-btn" onclick="go('sc-quiz')"><i class="ti ti-clipboard-text"></i><span>Check-in</span></button>
+      <button class="nav-btn" onclick="go('sc-ex')"><i class="ti ti-heart"></i><span>Exercícios</span></button>
+      <button class="nav-btn active" onclick="go('sc-hist')"><i class="ti ti-chart-line"></i><span>Histórico</span></button>
+      <button class="nav-btn" onclick="go('sc-set')"><i class="ti ti-settings"></i><span>Definições</span></button>
+    </nav>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="sc-set">
+    <div class="status-bar"><span class="app-name">Definições</span><span></span></div>
+    <div class="content">
+      <h1 class="page-title">Definições</h1>
+      <div class="set-card">
+        <div style="font-size:14px;font-weight:600;color:#2A2060;margin-bottom:10px;">Notificações</div>
+        <div class="set-row"><div class="l"><i class="ti ti-bell"></i>Alertas de tensão</div><button class="tgl on" onclick="tog(this)"></button></div>
+        <div class="set-row"><div class="l"><i class="ti ti-clock"></i>Lembrete diário</div><button class="tgl on" onclick="tog(this)"></button></div>
+        <div class="set-row"><div class="l"><i class="ti ti-flame"></i>Alertas de impulso</div><button class="tgl off" onclick="tog(this)"></button></div>
+      </div>
+      <div class="set-card">
+        <div style="font-size:14px;font-weight:600;color:#2A2060;margin-bottom:10px;">Privacidade</div>
+        <div class="set-row"><div class="l"><i class="ti ti-lock"></i>Dados locais apenas</div><button class="tgl on" onclick="tog(this)"></button></div>
+        <div class="set-row"><div class="l"><i class="ti ti-shield"></i>Biometria</div><button class="tgl off" onclick="tog(this)"></button></div>
+      </div>
+      <div class="set-card">
+        <div style="font-size:14px;font-weight:600;color:#2A2060;margin-bottom:12px;">Dados</div>
+        <button class="btn btn-o" style="margin-bottom:8px;"><i class="ti ti-download"></i> Exportar histórico</button>
+        <button class="btn btn-o" style="color:#B03030;border-color:#F0C0C0;"><i class="ti ti-trash"></i> Apagar todos os dados</button>
+      </div>
+      <div class="safety"><i class="ti ti-shield-check"></i><p>Esta aplicação não substitui acompanhamento médico ou psicológico profissional. Todos os dados ficam armazenados localmente no teu dispositivo.</p></div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn" onclick="go('sc-home')"><i class="ti ti-home"></i><span>Início</span></button>
+      <button class="nav-btn" onclick="go('sc-quiz')"><i class="ti ti-clipboard-text"></i><span>Check-in</span></button>
+      <button class="nav-btn" onclick="go('sc-ex')"><i class="ti ti-heart"></i><span>Exercícios</span></button>
+      <button class="nav-btn" onclick="go('sc-hist')"><i class="ti ti-chart-line"></i><span>Histórico</span></button>
+      <button class="nav-btn active" onclick="go('sc-set')"><i class="ti ti-settings"></i><span>Definições</span></button>
+    </nav>
+  </div>
+
+</div>
+
+<script>
+const qs=[
+  {id:'humor',text:'Como classificas o teu humor neste momento?',l:['Muito mau','Muito bom']},
+  {id:'ansiedade',text:'Sentes ansiedade ou preocupação intensa?',l:['Nenhuma','Muita']},
+  {id:'irritacao',text:'Qual o teu nível de irritação ou frustração?',l:['Calmo','Irritado']},
+  {id:'sono',text:'Como foi o teu sono na última noite?',l:['Muito mau','Muito bom']},
+  {id:'concentracao',text:'Consegues concentrar-te nas tuas tarefas?',l:['Nada','Totalmente']},
+  {id:'impulso',text:'Sentes vontade de agir por impulso ou tomar decisões precipitadas?',l:['Nenhuma','Muita']}
+];
+let cq=0, ans={};
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='sc-quiz'){cq=0;ans={};renderQ();}
+  if(id==='sc-hist')renderHist();
+}
+
+function selMood(el,m){
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function renderQ(){
+  const q=qs[cq];
+  document.getElementById('qcount').textContent=(cq+1)+'/'+qs.length;
+  document.getElementById('prog').style.width=Math.round(((cq+1)/qs.length)*100)+'%';
+  const prev=ans[q.id];
+  let btns='';
+  for(let i=1;i<=5;i++) btns+=`<button class="s-btn${prev==i?' on':''}" onclick="pickA(${i},this)">${i}</button>`;
+  document.getElementById('quiz-area').innerHTML=`<div class="q-card"><div class="q-idx">Pergunta ${cq+1} de ${qs.length}</div><div class="q-text">${q.text}</div><div class="scale-row">${btns}</div><div class="row-labels"><span>${q.l[0]}</span><span>${q.l[1]}</span></div></div>`;
+  document.getElementById('next-btn').textContent=cq<qs.length-1?'Continuar':'Analisar';
+}
+
+function pickA(v,btn){
+  ans[qs[cq].id]=v;
+  btn.closest('.scale-row').querySelectorAll('.s-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function nextQ(){
+  if(!ans[qs[cq].id]) ans[qs[cq].id]=3;
+  if(cq<qs.length-1){cq++;renderQ();}
+  else startAnalysis();
+}
+
+function calcScore(){
+  const a=ans;
+  let s=0;
+  s+=(6-(a.humor||3))*8;
+  s+=((a.ansiedade||3)-1)*10;
+  s+=((a.irritacao||3)-1)*10;
+  s+=(6-(a.sono||3))*8;
+  s+=(6-(a.concentracao||3))*7;
+  s+=((a.impulso||3)-1)*9;
+  return Math.min(100,Math.max(0,Math.round(s)));
+}
+
+async function startAnalysis(){
+  go('sc-result');
+  document.getElementById('ldr').style.display='flex';
+  document.getElementById('res-done').style.display='none';
+  const score=calcScore();
+  const level=score<35?'baixo':score<65?'médio':'alto';
+  const prompt=`És uma IA de bem-estar emocional chamada MindPulse. Analisa estas respostas (escala 1-5):\nHumor: ${ans.humor||3}/5, Ansiedade: ${ans.ansiedade||3}/5, Irritação: ${ans.irritacao||3}/5, Sono: ${ans.sono||3}/5, Concentração: ${ans.concentracao||3}/5, Impulso: ${ans.impulso||3}/5.\nNível de tensão: ${score}/100 (${level}).\nResponde em português europeu com análise breve e empática (2-3 frases) e exatamente 2 recomendações concretas separadas por "|||". Formato: [análise]|||[rec1]|||[rec2]. Sem markdown.`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();
+    const txt=d.content?.map(c=>c.text||'').join('')||'';
+    const p=txt.split('|||');
+    showRes(score,level,p[0]?.trim()||'',[(p[1]||'').trim(),(p[2]||'').trim()]);
+  }catch(e){
+    showRes(score,level,'Baseado nas tuas respostas, detetei alguns sinais de tensão. Reconhece como te sentes e faz pequenas pausas ao longo do dia.',['Experimenta a técnica de respiração 4-7-8 durante 3 minutos','Afasta-te do ecrã 5 minutos e bebe um copo de água']);
+  }
+}
+
+function showRes(score,level,analysis,recs){
+  document.getElementById('ldr').style.display='none';
+  document.getElementById('res-done').style.display='block';
+  const cm={baixo:'c-low',médio:'c-med',alto:'c-high'};
+  const bm={baixo:'low',médio:'med',alto:'high'};
+  const im={baixo:'ti-mood-smile',médio:'ti-mood-nervous',alto:'ti-mood-cry'};
+  document.getElementById('res-num').className='big-num '+cm[level];
+  document.getElementById('res-num').textContent=score;
+  document.getElementById('res-badge').innerHTML=`<span class="alert-badge ${bm[level]}"><i class="ti ${im[level]}"></i> Tensão ${level}</span>`;
+  document.getElementById('ai-text').textContent=analysis||'Análise concluída.';
+  const icons=['ti-wind','ti-pencil'];
+  document.getElementById('recs').innerHTML=recs.filter(Boolean).map((r,i)=>`<div class="insight" style="margin-bottom:8px;"><i class="ti ${icons[i]||'ti-bulb'}"></i><p>${r}</p></div>`).join('');
+}
+
+const exData={
+  breath:{title:'Respiração 4-7-8',html:`
+    <p style="font-size:14px;color:#666;margin-bottom:18px;line-height:1.6;">Esta técnica ativa o sistema nervoso parassimpático, reduzindo ansiedade em minutos.</p>
+    <div class="breath-circle" id="bc"><span class="bp" id="bp">Inspira</span><span class="bn" id="bn">4</span></div>
+    <p style="text-align:center;font-size:13px;color:#AAA;margin-top:8px;" id="bi">Inspira pelo nariz durante 4 segundos</p>
+    <button class="btn btn-p" style="margin-top:20px;" onclick="startBreath()">Começar</button>`},
+  pause:{title:'Pausa de 2 minutos',html:`
+    <p style="font-size:14px;color:#666;margin-bottom:16px;line-height:1.6;">Coloca o telemóvel de lado. Fecha os olhos. Observa os sons à tua volta sem os julgar.</p>
+    <div style="text-align:center;padding:28px 0;"><div style="font-size:52px;font-weight:700;color:#7F77DD;" id="pt">2:00</div><div style="font-size:13px;color:#AAA;margin-top:6px;">minutos restantes</div></div>
+    <button class="btn btn-p" onclick="startPause()">Iniciar pausa</button>`},
+  write:{title:'Escrita emocional',html:`
+    <p style="font-size:14px;color:#666;margin-bottom:16px;line-height:1.6;">Completa estas frases sem pensar demasiado.</p>
+    <div style="margin-bottom:12px;"><label class="qlbl">Agora mesmo sinto...</label><textarea placeholder="Escreve livremente..."></textarea></div>
+    <div style="margin-bottom:12px;"><label class="qlbl">O que me está a preocupar é...</label><textarea placeholder="Escreve livremente..."></textarea></div>
+    <div style="margin-bottom:18px;"><label class="qlbl">O que posso fazer agora é...</label><textarea placeholder="Escreve livremente..."></textarea></div>
+    <button class="btn btn-p">Guardar entrada</button>`},
+  walk:{title:'Caminhada consciente',html:`
+    <p style="font-size:14px;color:#666;margin-bottom:16px;line-height:1.6;">Uma caminhada de 10 minutos reduz o cortisol e melhora o humor.</p>
+    ${['Sai para um espaço aberto, de preferência com natureza.','Deixa o telemóvel no bolso. Sem música, sem podcasts.','A cada passo, sente o chão sob os pés.','Observa 5 coisas que vês. 3 sons. 1 cheiro.','Regula a respiração: inspira 3 passos, expira 3 passos.'].map((s,i)=>`<div class="step-item"><div class="step-num">${i+1}</div><p style="font-size:14px;color:#333;line-height:1.5;padding-top:4px;">${s}</p></div>`).join('')}`},
+  ground:{title:'Grounding 5-4-3-2-1',html:`
+    <p style="font-size:14px;color:#666;margin-bottom:16px;line-height:1.6;">Técnica de ancoragem para momentos de impulsividade ou ansiedade intensa.</p>
+    ${[['5 coisas que VEJO','ti-eye','Olha em redor e nomeia 5 objetos que vês agora.'],['4 coisas que TOCO','ti-hand-stop','Toca em 4 superfícies e sente a textura.'],['3 coisas que OUÇO','ti-ear','Fecha os olhos e identifica 3 sons.'],['2 coisas que CHEIRO','ti-droplet','Identifica 2 aromas à tua volta.'],['1 coisa que GOSTAS','ti-heart','Pensa numa coisa que te traz conforto.']].map(([t,ic,d])=>`<div class="insight" style="margin-bottom:8px;"><i class="ti ${ic}"></i><div><strong style="font-size:13px;color:#3C3489;display:block;margin-bottom:2px;">${t}</strong><span style="font-size:12px;color:#888;">${d}</span></div></div>`).join('')}`}
+};
+
+function openEx(key){
+  const ex=exData[key];
+  document.getElementById('exd-title').textContent=ex.title;
+  document.getElementById('exd-body').innerHTML=`<div style="padding-top:8px;">${ex.html}</div>`;
+  go('sc-exd');
+}
+
+let bTimer=null;
+function startBreath(){
+  if(bTimer) clearInterval(bTimer);
+  const ph=[{n:'Inspira',s:4,i:'Inspira pelo nariz'},{n:'Retém',s:7,i:'Retém o ar'},{n:'Expira',s:8,i:'Expira lentamente pela boca'}];
+  let pi=0,cnt=ph[0].s;
+  const upd=()=>{
+    const el1=document.getElementById('bp'),el2=document.getElementById('bn'),el3=document.getElementById('bi');
+    if(el1)el1.textContent=ph[pi].n;
+    if(el2)el2.textContent=cnt;
+    if(el3)el3.textContent=ph[pi].i;
+  };
+  upd();
+  bTimer=setInterval(()=>{cnt--;if(cnt<=0){pi=(pi+1)%3;cnt=ph[pi].s;}upd();},1000);
+}
+
+let pTimer=null;
+function startPause(){
+  if(pTimer) clearInterval(pTimer);
+  let s=120;
+  const el=document.getElementById('pt');
+  pTimer=setInterval(()=>{s--;const m=Math.floor(s/60),sec=s%60;if(el)el.textContent=m+':'+(sec<10?'0':'')+sec;if(s<=0)clearInterval(pTimer);},1000);
+}
+
+function renderHist(){
+  const vals=[45,62,38,70,55,40,48];
+  const colors=vals.map(v=>v<45?'#1D9E75':v<65?'#D4870A':'#E04040');
+  const el=document.getElementById('hchart');
+  if(!el) return;
+  el.innerHTML=vals.map((v,i)=>`<div class="bar-col"><div class="b" style="height:${Math.round((v/100)*75)}px;background:${colors[i]};"></div></div>`).join('');
+}
+
+function tog(btn){btn.className='tgl '+(btn.className.includes('on')?'off':'on');}
+
+function tick(){const n=new Date(),h=n.getHours().toString().padStart(2,'0'),m=n.getMinutes().toString().padStart(2,'0'),el=document.getElementById('clock');if(el)el.textContent=h+':'+m;}
+tick(); setInterval(tick,30000);
+renderHist();
+</script>
+</body>
+</html>
